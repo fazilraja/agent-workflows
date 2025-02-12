@@ -1,5 +1,5 @@
 """
-Knowledge base retrieval agent using PydanticAI and MongoDB.
+docs: https://ai.pydantic.dev/examples/rag/
 """
 
 from __future__ import annotations
@@ -13,8 +13,12 @@ import pymongo
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
 
-# Apply nest_asyncio to fix event loop issues
+# Apply nest_asyncio to fix event loop issues in notebooks/interactive environments
 nest_asyncio.apply()
+
+# --------------------------------------------------------------
+# Define the database connection and dependencies
+# --------------------------------------------------------------
 
 @dataclass
 class DatabaseDeps:
@@ -25,7 +29,6 @@ class DatabaseDeps:
 class DatabaseConn:
     """MongoDB database connection."""
     def __init__(self, uri: str = os.getenv("MONGODB_URI")):
-        print(uri)
         if not uri:
             raise ValueError("MONGODB_URI environment variable is required")
         self.client = pymongo.MongoClient(uri)
@@ -39,16 +42,7 @@ class DatabaseConn:
         self.collection = self.db['kb']
 
     def search_kb(self, query: str) -> List[dict[str, Any]]:
-        """Search the knowledge base using regex for both question and answer fields.
-        
-        Args:
-            query: The search query
-            
-        Returns:
-            List of matching documents with serializable fields
-        """
-        # Using regex search on both question and answer fields
-        # The $regex option 'i' makes it case-insensitive
+        """Search the knowledge base using regex for both question and answer fields."""
         results = self.collection.find({
             "$or": [
                 {"question": {"$regex": query, "$options": "i"}},
@@ -69,12 +63,18 @@ class DatabaseConn:
         print(f"Found {len(serializable_results)} results")
         return serializable_results
 
+# --------------------------------------------------------------
+# Define the structured response model
+# --------------------------------------------------------------
 
 class KBResponse(BaseModel):
     """Structured response from the knowledge base agent."""
     answer: str = Field(description="The answer to the user's question from the knowledge base.")
     source: int = Field(description="The ID of the knowledge base entry that provided the answer.")
 
+# --------------------------------------------------------------
+# Create the agent with the search tool
+# --------------------------------------------------------------
 
 kb_agent = Agent(
     'gpt-4o-mini',
@@ -91,20 +91,14 @@ kb_agent = Agent(
 
 @kb_agent.tool
 def search_kb(ctx: RunContext[DatabaseDeps], question: str) -> List[dict[str, Any]]:
-    """Search the knowledge base for relevant information.
-    
-    Args:
-        ctx: The run context with database dependencies
-        question: The user's question to search for
-        
-    Returns:
-        List of relevant knowledge base entries
-    """
+    """Search the knowledge base for relevant information."""
+    # ctx is the context of the run, it contains the dependencies and the question
     return ctx.deps.db_conn.search_kb(question)
 
+# --------------------------------------------------------------
+# Example usage
+# --------------------------------------------------------------
 
-"""Example usage of the knowledge base agent."""
-# Initialize database connection
 db_conn = DatabaseConn()
 deps = DatabaseDeps(db_conn=db_conn)
 
@@ -116,10 +110,10 @@ questions = [
 
 for question in questions:
     print(f"\nQuestion: {question}")
-    result = kb_agent.run_sync(question, deps=deps)  # Use the actual question
+    result = kb_agent.run_sync(question, deps=deps)
     print(f"Answer: {result.data.answer}")
     print(f"Source: {result.data.source}")
-    print("messages: ", result.all_messages())
+    print("Message History:", result.all_messages())
 
 
 

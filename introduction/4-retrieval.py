@@ -12,6 +12,7 @@ import nest_asyncio
 import pymongo
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
+from pydantic_ai.usage import UsageLimits
 
 # Apply nest_asyncio to fix event loop issues in notebooks/interactive environments
 nest_asyncio.apply()
@@ -79,10 +80,7 @@ class KBResponse(BaseModel):
 kb_agent = Agent(
     'gpt-4o-mini',
     system_prompt=(
-        "You are a helpful assistant that answers questions from the knowledge base about our e-commerce store. "
-        "IMPORTANT: Only make ONE search attempt using the search_kb tool. "
-        "If the search returns no results, immediately respond with 'I apologize, but I don't have any information about that in my knowledge base.' "
-        "and set the source to 0. Do not make multiple search attempts."
+        "You are a helpful assistant that answers questions from the knowledge base about our e-commerce store."
     ),
     deps_type=DatabaseDeps,
     result_type=KBResponse,
@@ -110,7 +108,7 @@ questions = [
 
 for question in questions:
     print(f"\nQuestion: {question}")
-    result = kb_agent.run_sync(question, deps=deps)
+    result = kb_agent.run_sync(question, deps=deps, usage_limits=UsageLimits(request_limit=3))
     print(f"Answer: {result.data.answer}")
     print(f"Source: {result.data.source}")
     print("Message History:", result.all_messages())

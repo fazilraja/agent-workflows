@@ -5,7 +5,6 @@ from pydantic_ai import Agent, RunContext
 import os
 import logging
 import nest_asyncio
-import asyncio
 
 nest_asyncio.apply()
 
@@ -16,6 +15,8 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
+
+model = "openai:gpt-4o-mini"
 
 # --------------------------------------------------------------
 # Step 1: Define the data models for each stage
@@ -57,7 +58,7 @@ class EventConfirmation(BaseModel):
 # Step 2: Define the functions
 # --------------------------------------------------------------
 
-async def extract_event_info(user_input: str) -> EventExtraction:
+def extract_event_info(user_input: str) -> EventExtraction:
     """First LLM call to determine if input is a calendar event"""
     logger.info("Starting event extraction analysis")
     logger.debug(f"Input text: {user_input}")
@@ -65,12 +66,12 @@ async def extract_event_info(user_input: str) -> EventExtraction:
     today = datetime.now()
     date_context = f"Today is {today.strftime('%A, %B %d, %Y')}."
     agent = Agent(
-        model="gpt-4o-mini",
+        model=model,
         system_prompt=f"{date_context} Analyze if the text describes a calendar event.",
         result_type=EventExtraction
     )
 
-    result = await agent.run(user_prompt=user_input)
+    result = agent.run_sync(user_prompt=user_input)
     
     logger.info(
         f"Extraction complete - Is calendar event: {result.data.is_calendar_event}, Confidence: {result.data.confidence_score:.2f}"
@@ -78,7 +79,7 @@ async def extract_event_info(user_input: str) -> EventExtraction:
     return result.data
 
 
-async def parse_event_details(description: str) -> EventDetails:
+def parse_event_details(description: str) -> EventDetails:
     """Second LLM call to extract specific event details"""
     logger.info("Starting event details parsing")
 
@@ -86,12 +87,12 @@ async def parse_event_details(description: str) -> EventDetails:
     date_context = f"Today is {today.strftime('%A, %B %d, %Y')}."
     
     agent = Agent(
-        model="gpt-4o-mini",
+        model=model,
         system_prompt=f"{date_context} Extract detailed event information. When dates reference 'next Tuesday' or similar relative dates, use this current date as reference.",
         result_type=EventDetails
     )
     
-    result = await agent.run(user_prompt=description)
+    result = agent.run_sync(user_prompt=description)
 
     logger.info(
         f"Parsed event details - Name: {result.data.name}, Date: {result.data.date}, Duration: {result.data.duration_minutes}min"
@@ -100,17 +101,17 @@ async def parse_event_details(description: str) -> EventDetails:
     return result.data
 
 
-async def generate_confirmation(event_details: EventDetails) -> EventConfirmation:
+def generate_confirmation(event_details: EventDetails) -> EventConfirmation:
     """Third LLM call to generate a confirmation message"""
     logger.info("Generating confirmation message")
     
     agent = Agent(
-        model="gpt-4o-mini",
+        model=model,
         system_prompt="Generate a natural confirmation message for the event. Sign of with your name; Susie",
         result_type=EventConfirmation
     )
     
-    result = await agent.run(user_prompt=str(event_details.model_dump()))
+    result = agent.run_sync(user_prompt=str(event_details.model_dump()))
     
     logger.info("Confirmation message generated successfully")
     return result.data
@@ -120,13 +121,13 @@ async def generate_confirmation(event_details: EventDetails) -> EventConfirmatio
 # Step 3: Chain the functions together
 # --------------------------------------------------------------
 
-async def process_calendar_request(user_input: str) -> Optional[EventConfirmation]:
+def process_calendar_request(user_input: str) -> Optional[EventConfirmation]:
     """Main function implementing the prompt chain with gate check"""
     logger.info("Processing calendar request")
     logger.debug(f"Raw input: {user_input}")
 
     # First LLM call: Extract basic info
-    initial_extraction = await extract_event_info(user_input)
+    initial_extraction = extract_event_info(user_input)
 
     # Gate check: Verify if it's a calendar event with sufficient confidence
     if (
@@ -141,10 +142,10 @@ async def process_calendar_request(user_input: str) -> Optional[EventConfirmatio
     logger.info("Gate check passed, proceeding with event processing")
 
     # Second LLM call: Get detailed event information
-    event_details = await parse_event_details(initial_extraction.description)
+    event_details = parse_event_details(initial_extraction.description)
 
     # Third LLM call: Generate confirmation
-    confirmation = await generate_confirmation(event_details)
+    confirmation = generate_confirmation(event_details)
 
     logger.info("Calendar request processing completed successfully")
     return confirmation
@@ -156,7 +157,7 @@ async def process_calendar_request(user_input: str) -> Optional[EventConfirmatio
 
 user_input = "Let's schedule a 1h team meeting next Tuesday at 2pm with Alice and Bob to discuss the project roadmap."
 
-result = asyncio.run(process_calendar_request(user_input))
+result = process_calendar_request(user_input)
 if result:
     print(f"Confirmation: {result.confirmation_message}")
     if result.calendar_link:
@@ -171,7 +172,7 @@ else:
 
 user_input = "Can you send an email to Alice and Bob to discuss the project roadmap?"
 
-result = asyncio.run(process_calendar_request(user_input))
+result = process_calendar_request(user_input)
 if result:
     print(f"Confirmation: {result.confirmation_message}")
     if result.calendar_link:

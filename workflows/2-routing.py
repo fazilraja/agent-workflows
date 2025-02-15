@@ -13,6 +13,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+model = "openai:gpt-4o-mini"
+
 # --------------------------------------------------------------
 # Step 1: Define the data models for routing and responses
 # --------------------------------------------------------------
@@ -73,7 +75,7 @@ def route_calendar_request(user_input: str) -> CalendarRequestType:
     logger.info("Routing calendar request")
 
     agent = Agent(
-        model="gpt-4o-mini",
+        model=model,
         system_prompt="Determine if this is a request to create a new calendar event or modify an existing one.",
         result_type=CalendarRequestType
     )
@@ -91,7 +93,7 @@ def handle_new_event(description: str) -> CalendarResponse:
 
     # Get event details
     agent = Agent(
-        model="gpt-4o-mini",
+        model=model,
         system_prompt="Extract details for creating a new calendar event.",
         result_type=NewEventDetails
     )
@@ -115,7 +117,7 @@ def handle_modify_event(description: str) -> CalendarResponse:
 
     # Get modification details
     agent = Agent(
-        model="gpt-4o-mini",
+        model=model,
         system_prompt="Extract details for modifying an existing calendar event.",
         result_type=ModifyEventDetails
     )

@@ -2,133 +2,107 @@
 
 Ever wondered how to build reliable AI systems without drowning in frameworks? This guide shows you how to create powerful LLM workflows using pure Python. No fancy frameworks, just battle-tested patterns that actually work.
 
+# Resources & References
+
+- [Practical LLM Patterns](https://www.anthropic.com/news/practical-llm-patterns) - Anthropic Article
+- [GenAI with PydanticAI + MongoDB Example](https://github.com/mongodb-developer/GenAI-Showcase/blob/main/notebooks/agents/ai_agent_with_pydanticai_and_mongodb.ipynb) - Implementation Guide
+- [AI Cookbook Patterns](https://github.com/daveebbelaar/ai-cookbook/tree/main/patterns/workflows) - Workflow Inspiration
+
 ## Why This Guide?
 
 If you've tried building LLM applications, you know the challenges:
 - Keeping conversations on track
 - Handling complex multi-step tasks
 - Managing reliability and validation
-- Ensuring type safety and validation
-- Implementing proper logging and error handling
 
-We'll tackle these head-on with patterns drawn from real production systems, using Pydantic for type safety and structured outputs. Think of this as your practical field guide to LLM development.
+We'll tackle these head-on with patterns drawn from real production systems. Think of this as your practical field guide to LLM development.
 
 ## What You'll Learn
 
 ### 1. Core Building Blocks
 Start with the fundamentals:
-- Making smart LLM calls with type safety
-- Getting structured responses using Pydantic
-- Working with tools and validation
-- Implementing proper logging
-- Managing async operations
+- Making smart LLM calls
+- Getting structured responses
+- Working with tools
+- Implementing retrieval
 
 ### 2. Essential Workflow Patterns
 
-#### The Chain Pattern (Prompt Chaining)
-A sequential workflow that breaks down complex tasks into manageable, validated steps:
+#### The Chain Pattern
+Think of this as your assembly line for AI tasks. Instead of one massive prompt, you break things down into manageable steps:
 
 ```mermaid
 graph LR
-    A[User Input] --> B[Extract Event Info]
-    B -->|Confidence Check| C{Gate Check}
-    C -->|Pass| D[Parse Details]
-    D --> E[Generate Confirmation]
-    C -->|Fail| F[Reject Request]
-    
-    style C fill:#f9f,stroke:#333
-    style F fill:#f66,stroke:#333
+    A[Input] --> B[Step 1: Analyze]
+    B --> C[Step 2: Process]
+    C --> D[Step 3: Refine]
+    D --> E[Output]
 ```
 
-Real implementation: A calendar event processor that:
-1. Extracts and validates event information
-2. Applies confidence thresholds
-3. Parses detailed event parameters
-4. Generates structured confirmations
+Real-world example: A meeting scheduler that:
+1. Checks if you're actually trying to schedule something
+2. Pulls out the important details
+3. Double-checks everything makes sense
+4. Gives you a clean confirmation
 
 #### The Router Pattern
-An intelligent dispatcher that routes requests to specialized handlers based on request type and confidence scoring:
+Like a smart traffic controller for your AI system. It figures out what kind of request you're dealing with and sends it to the right handler:
 
 ```mermaid
-graph TD
-    A[User Input] --> B[Router Analysis]
-    B -->|Confidence Check| C{Route Decision}
-    C -->|New Event| D[New Event Handler]
-    C -->|Modify Event| E[Modification Handler]
-    C -->|Low Confidence| F[Reject Request]
-    D & E --> G[Calendar Response]
-    
-    style C fill:#f9f,stroke:#333
-    style F fill:#f66,stroke:#333
+graph LR
+    A[Request] --> B[Smart Router]
+    B --> C[Handler A]
+    B --> D[Handler B]
+    B --> E[Handler C]
 ```
 
-Implementation features:
-- Type-safe routing using Pydantic models
-- Confidence threshold validation
-- Specialized handlers for different request types
-- Structured response generation
+Perfect for when you need to:
+- Sort requests by type
+- Use different models for different tasks
+- Keep your code organized and maintainable
 
 #### The Parallel Pattern
-Concurrent validation and processing for improved performance and security:
+Why wait when you can multitask? Run multiple checks or processes at once:
 
 ```mermaid
-graph TD
-    A[User Input] --> B[Parallel Validation]
-    B --> C[Calendar Validation]
-    B --> D[Security Check]
-    C & D -->|Async Gather| E{Validation Gate}
-    E -->|Pass| F[Process Request]
-    E -->|Fail| G[Reject Request]
-    
-    style E fill:#f9f,stroke:#333
-    style G fill:#f66,stroke:#333
+graph LR
+    A[Input] --> B[Check 1]
+    A --> C[Check 2]
+    A --> D[Check 3]
+    B & C & D --> E[Combine Results]
 ```
 
-Key features:
-- Async validation using asyncio
-- Parallel security and content checks
-- Structured validation models
-- Comprehensive logging
+Great for:
+- Running multiple validations
+- Generating different perspectives
+- Improving response time
 
 #### The Orchestra Pattern
-A sophisticated content generation system that coordinates multiple LLM agents:
+Like a conductor leading a performance step by step, this pattern orchestrates complex tasks in a sequential flow:
 
 ```mermaid
-graph TD
+graph LR
     A[Topic Input] --> B[Orchestrator]
     B --> C[Planning Phase]
-    C --> D[Section Writing]
+    C --> D[Writing Phase]
     D --> E[Review Phase]
-    E -->|Cohesion Check| F{Quality Gate}
-    F -->|Pass| G[Final Version]
-    F -->|Needs Revision| H[Apply Edits]
-    H --> E
-    
-    style F fill:#f9f,stroke:#333
 ```
 
-Implementation highlights:
-- Structured content planning
-- Coordinated multi-agent writing
-- Quality metrics and revision cycles
-- Type-safe content models
+Perfect for complex content creation tasks that require:
+- Upfront planning and structure
+- Sequential section-by-section writing
+- Final review and cohesion check
 
 ## Getting Started
 
 1. Clone this repo
-2. Install dependencies:
-   ```bash
-   uv venv
-   source .venv/bin/activate
-   uv pip install -r requirements.txt
-   ```
-3. Check out the examples in `workflows/`
-4. Start with the basic patterns
-5. Mix and match to build your solution
+2. Check out the examples folder
+3. Start with the basic patterns
+4. Mix and match to build your solution
 
 ## Need Help?
 
-- Check out the examples in `workflows/`
+- Check out the examples folder
 - Read the implementation guides
 - Email me at fazil@centrai.co
 

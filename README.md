@@ -7,6 +7,7 @@ Ever wondered how to build reliable AI systems without drowning in frameworks? T
 - [Practical LLM Patterns](https://www.anthropic.com/news/practical-llm-patterns) - Anthropic Article
 - [GenAI with PydanticAI + MongoDB Example](https://github.com/mongodb-developer/GenAI-Showcase/blob/main/notebooks/agents/ai_agent_with_pydanticai_and_mongodb.ipynb) - Implementation Guide
 - [AI Cookbook Patterns](https://github.com/daveebbelaar/ai-cookbook/tree/main/patterns/workflows) - Workflow Inspiration
+- [OpenAI Docs](https://platform.openai.com/docs/guides/function-calling) - OpenAI Docs
 
 ## Why This Guide?
 
